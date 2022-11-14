@@ -7,7 +7,7 @@ documentation/*.out
 documentation/*.snm
 documentation/*.toc
 documentation/*.backup
-data/output_easy.json
+data/*.json
 *.pyc
 output
 ..bfg-report/
