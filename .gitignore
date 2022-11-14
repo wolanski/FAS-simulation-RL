@@ -7,11 +7,10 @@ documentation/*.out
 documentation/*.snm
 documentation/*.toc
 documentation/*.backup
+data/output_easy.json
 *.pyc
 output
 ..bfg-report/
 .project
 .pydevproject
 numpy_data/*
-
-data/output_easy.json
