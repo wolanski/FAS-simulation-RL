@@ -14,4 +14,3 @@ output
 .project
 .pydevproject
 numpy_data/*
-data/output_easy.json
