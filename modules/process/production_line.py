@@ -1,12 +1,13 @@
-import simpy
 import functools
 
-from modules.process.random_delay import delay
+import simpy
 
 from modules.components.bowl_feeder import BowlFeeder
 from modules.components.conveyor import Conveyor
 from modules.components.crane import Crane
 from modules.components.manual_step import ManualStep
+from modules.process.random_delay import delay
+
 
 # Models one production line
 class ProductionLine:
@@ -73,3 +74,23 @@ class ProductionLine:
 
     def get_events(self):
         return functools.reduce(lambda a, b: a + b, [module.get_events() for module in self.all_modules], [])
+    
+    #  render:
+    # Display state 
+    def render(self):
+      print("render not implemented")
+      
+    #  reset:
+    #    Initialise environment
+    #    Return first state observations
+    def reset(self):
+      print("reset not implemented")
+      
+    #  step:
+    #  * A step method takes and passes an action to the environment and returns:
+      #  1. the state new observations (update state, returns observation...)
+      #  2. reward
+      #  3. whether state is terminal (A way to recognise and return a terminal state (end of episode))
+      #  4. additional information
+    def step(self):
+      print("step not implemented")

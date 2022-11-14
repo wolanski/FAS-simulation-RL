@@ -41,6 +41,7 @@ class FASInstance:
         yield self.pl.conveyor10.spawn()
         yield self.pl.manual_tighten_bolts3.spawn()
         yield self.pl.conveyor11.spawn()
+        print("---PROCESS COMPLETED---")
 
     def spawn(self):
         return self.env.process(self.process())
