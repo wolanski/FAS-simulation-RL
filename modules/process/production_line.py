@@ -69,9 +69,16 @@ class ProductionLine:
             self.manual_add_components3,
             self.manual_tighten_bolts3
             ]
-        self.all_modules = self.conveyors + self.bowl_feeders + self.cranes + \
-                           self.manual_steps
+        self.all_modules = self.conveyors + self.bowl_feeders + self.cranes + self.manual_steps
+        
+        # Set up State Space dictionary
+        self.state = dict()
+        
+        # Set up Action space
+        self.actions = []
 
+
+# RL Interfacing Methods
     def get_events(self):
         return functools.reduce(lambda a, b: a + b, [module.get_events() for module in self.all_modules], [])
     
