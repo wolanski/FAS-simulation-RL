@@ -19,9 +19,10 @@ clock.spawn()
 
 last_item = None
 
-for i in range(0, 30):
+for i in range(0, 1):
     fas_instance = FASInstance(env, production_line, logger)
     last_item = fas_instance.spawn()
+    #env.step()
 
 env.run(last_item)
 

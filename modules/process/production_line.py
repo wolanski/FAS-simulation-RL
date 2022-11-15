@@ -72,22 +72,24 @@ class ProductionLine:
         self.all_modules = self.conveyors + self.bowl_feeders + self.cranes + self.manual_steps
         
         # Set up observation and action space sizes
-        self.observation_size
+        self.observation_size = 5
         self.action_size = 5
         
         # Set up State Space dictionary
-        self.state = dict()
-        self.state[0]['status'] = 0
-        self.state[0]['last_maintannance'] = 0
-        self.state[0]['anomaly'] = 0
-        self.state['prod_volume_instant'] = 0
-        self.state['Prod_volume_accum'] = 0
-        self.state['last_maintannance'] = 0
+        self.resource_state = {}
+        resource_id = ['conveyor', 'machine1', 'machine2']
+        resource_states = {'status': '', 'last_maintannance': '', 'anomaly': ''}
+        for i in range (0, len(resource_id)): self.resource_state.update({resource_id[i]: dict(resource_states)})
         # Machine States (index of machine)
         #   – Machine status (work in progress, failure, wait, maintenance) – Remaining time for current job
         #   – Time for remaining operations in the queue
         #   – elapsed time since last maintenance
         #   – Indication of anomaly (sound, vibration)
+        
+        self.line_state = {}
+        self.line_state['prod_volume_instant'] = 0
+        self.line_state['Prod_volume_accum'] = 0
+        self.line_state['last_maintannance'] = 0
         # Global (System) States
         #   – instant production volume
         #   – accumulated production volume
@@ -105,7 +107,9 @@ class ProductionLine:
     
     # Pass resource (machine) to be run and update State
     def run_resource(self, resource):
-      resource.spawn()
+      print("RUN RESOURCE")
+      resource.update_state() # self.resource_state[] = resource.get_state()
+      return resource.spawn()
       # add update State
       
     # RL Interfacing Methods

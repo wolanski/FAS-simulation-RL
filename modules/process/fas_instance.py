@@ -10,7 +10,9 @@ class FASInstance:
         self.input = env.event()
 
     def process(self):
-        yield self.pl.crane1.spawn()
+        yield self.pl.run_resource(self.pl.crane1)
+        
+        #yield self.pl.crane1.spawn()
         yield self.pl.manual_inspection.spawn()
         yield self.pl.conveyor1.spawn()
         yield self.pl.bowl1.spawn()
