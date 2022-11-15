@@ -71,19 +71,40 @@ class ProductionLine:
             ]
         self.all_modules = self.conveyors + self.bowl_feeders + self.cranes + self.manual_steps
         
+        # Set up observation and action space sizes
+        self.observation_size
+        self.action_size = 5
+        
         # Set up State Space dictionary
         self.state = dict()
+        # Machine States (index of machine)
+        #   – Machine status (work in progress, failure, wait, maintenance) – Remaining time for current job
+        #   – Time for remaining operations in the queue
+        #   – elapsed time since last maintenance
+        #   – Indication of anomaly (sound, vibration)
+        # Global (System) States
+        #   – instant production volume
+        #   – accumulated production volume
+        #   – elapsed time since last maintenance
         
         # Set up Action space
         self.actions = []
+        # Action space (discreet)
+        #   – Schedule Planned Maintenance (for several components)
+        #   – Schedule urgent maintenance for specific machine
 
 
-# RL Interfacing Methods
     def get_events(self):
         return functools.reduce(lambda a, b: a + b, [module.get_events() for module in self.all_modules], [])
     
-    #  render:
-    # Display state 
+    # Pass resource (machine) to be run and update State
+    def run_resource(self, resource):
+      resource.spawn()
+      # add update State
+      
+    # RL Interfacing Methods
+    # render:
+    #   Display state 
     def render(self):
       print("render not implemented")
       
