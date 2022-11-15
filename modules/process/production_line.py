@@ -77,6 +77,12 @@ class ProductionLine:
         
         # Set up State Space dictionary
         self.state = dict()
+        self.state[0]['status'] = 0
+        self.state[0]['last_maintannance'] = 0
+        self.state[0]['anomaly'] = 0
+        self.state['prod_volume_instant'] = 0
+        self.state['Prod_volume_accum'] = 0
+        self.state['last_maintannance'] = 0
         # Machine States (index of machine)
         #   – Machine status (work in progress, failure, wait, maintenance) – Remaining time for current job
         #   – Time for remaining operations in the queue
