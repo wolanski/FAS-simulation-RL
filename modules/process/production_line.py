@@ -105,10 +105,13 @@ class ProductionLine:
     def get_events(self):
         return functools.reduce(lambda a, b: a + b, [module.get_events() for module in self.all_modules], [])
     
+    
     # Pass resource (machine) to be run and update State
     def run_resource(self, resource):
       print("RUN RESOURCE")
       resource.update_state() # self.resource_state[] = resource.get_state()
+      # production line update state
+      #self.line_state = 
       return resource.spawn()
       # add update State
       

@@ -8,6 +8,9 @@ class FASInstance:
         self.pl = production_line
         self.logger = logger
         self.input = env.event()
+        
+    # def _step_(self):
+    #     pass
 
     def process(self):
         yield self.pl.run_resource(self.pl.crane1)
