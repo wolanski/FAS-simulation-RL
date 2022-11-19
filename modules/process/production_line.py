@@ -76,30 +76,25 @@ class ProductionLine:
             ]
         self.all_modules = self.conveyors + self.bowl_feeders + self.cranes + self.manual_steps
         
-        # Set up State Space dictionary
-
-        self.resource_states = {}
-        self.line_states = {'prod_volume_instant': '', 'Prod_volume_accum': '', 'last_maintannance': ''}
-        self.observation_size = 0
+        # Line State Space dictionary
+        self.line_states = {'prod_volume_instant': '3', 'Prod_volume_accum': '', 'last_maintannance': ''}
+        self.observation_size = len(self.get_observations())
         # Machine States (index of machine)
-        #   – Machine status (work in progress, failure, wait, maintenance) 
-        #   – Remaining time for current job
-        #   – Time for remaining operations in the queue
-        #   – elapsed time since last maintenance
-        #   – Indication of anomaly (sound, vibration)
+            #   – Machine status (work in progress, failure, wait, maintenance) 
+            #   – Remaining time for current job
+            #   – Time for remaining operations in the queue
+            #   – elapsed time since last maintenance
+            #   – Indication of anomaly (sound, vibration)
         # Global (System) States
-        #   – instant production volume
-        #   – accumulated production volume
-        #   – elapsed time since last maintenance
-
-        #self.observation_size = len(self.resource_state) * len(self.resource_states_cat) + len(self.line_state)
+            #   – instant production volume
+            #   – accumulated production volume
+            #   – elapsed time since last maintenance
         
-        # Set up action space
+        # Action space (discreet)
+            #   – Schedule Planned Maintenance (for several components)
+            #   – Schedule urgent maintenance for specific machine
         self.action_size = 5
         self.actions = []
-        # Action space (discreet)
-        #   – Schedule Planned Maintenance (for several components)
-        #   – Schedule urgent maintenance for specific machine
 
 
     def get_events(self):
@@ -152,16 +147,18 @@ class ProductionLine:
         # add update State
 
     def get_states(self):
+        resource_states = {}
         for i in range (0, len(self.all_modules)):
-            self.resource_states.update({self.all_modules[i].name: self.all_modules[i].states})
+            resource_states.update({self.all_modules[i].name: self.all_modules[i].states})
+        return resource_states
 
 
     def get_observations(self):
         # Put state dictionary items into observations list
         observation = []
+        observation.extend([v for k,v in self.line_states.items()])
         for module in self.all_modules:
             observation.extend([v for k,v in module.states.items()])
-
         return observation
 
 
