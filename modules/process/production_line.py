@@ -157,14 +157,14 @@ class ProductionLine:
 
 
     def get_observations(self):
-        print("get_observations not implemented")
-        # flatten dictionary
-        #self.state['weekday'] = int((self.env.now) % 7)
         # Put state dictionary items into observations list
-        #observations = [v for k,v in self.line_state.items()]
-        #append(observations) = [y for x,y in self.line_state.items()]
-        #append(observations) = [z for x,y,z in self.resource_state.items()]
-        #return observations
+        observation = []
+        for module in self.all_modules:
+            observation.extend([v for k,v in module.states.items()])
+
+        return observation
+
+
 
     # RL Interfacing Methods
     # render:

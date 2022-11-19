@@ -12,7 +12,7 @@ class Crane(simpy.Resource):
         self.env = env
         self.name = name
         #self.state = "waiting"
-        self.states = {'status': ''}
+        self.states = {'status': '', 'queue': 0}
         self.states['status'] = 'waiting'
         
 
