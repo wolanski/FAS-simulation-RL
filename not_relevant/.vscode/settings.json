@@ -1,0 +1,12 @@
+{
+    "python.languageServer": "Pylance",
+    "python.envFile": "/workspaces/FAS-simulation-RL/.env",
+    "python.analysis.typeCheckingMode": "basic",
+    "python.autoComplete.extraPaths": ["/workspaces/FAS-simulation-RL/"],
+    "python.analysis.extraPaths": ["/workspaces/FAS-simulation-RL/modules/components"],
+    "python.analysis.indexing": true,
+    "python.formatting.provider": "black",
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.autoSearchPaths": true,
+    "vsintellicode.features.python.deepLearning": "enabled"
+}

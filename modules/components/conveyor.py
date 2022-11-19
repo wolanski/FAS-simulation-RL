@@ -12,8 +12,10 @@ class Conveyor(simpy.Resource):
         self.debug = debug
         self.duration = duration
         self.logger = logger
-        self.name = name
         self.env = env
+        self.name = name
+        self.states = {'status': '', 'queue': 0}
+        self.states['status'] = 'waiting'
         self.faults = []
 
     def add_fault(self, fault):
@@ -35,8 +37,8 @@ class Conveyor(simpy.Resource):
     def spawn(self):
         return self.env.process(self.process())
     
-    # def update_state(self):
-    #     print("_____UPDATE STATE")
+    def get_state(self):
+        print("_____UPDATE STATE of CONVEYOR")
 
     def get_events(self):
         return [self.name + " CONVEYOR_GATE"]

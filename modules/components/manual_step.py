@@ -9,9 +9,12 @@ class ManualStep(simpy.Resource):
         self.duration = duration
         self.queue = 0
         self.logger = logger
-        self.state = "waiting"
-        self.name = name
         self.env = env
+        self.name = name
+        #self.state = "waiting"
+        self.states = {'status': ''}
+        self.states['status'] = 'waiting'
+        
 
     def process(self):
         if self.debug:
@@ -24,14 +27,14 @@ class ManualStep(simpy.Resource):
             if self.debug:
                 print(self.name + ": process")
             self.queue = self.queue - 1
-            self.state = "running"
+            #self.state = "running"
             yield self.env.timeout(delay(self.duration, 5))
             if self.debug:
                 print(self.name + ": ok")
             self.logger.addMessage(self.name + " OK");
         if self.debug:
             print(self.name + ": wait")
-        self.state = "waiting"
+        #self.state = "waiting"
         return
 
     def spawn(self):

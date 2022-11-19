@@ -1,5 +1,3 @@
-import simpy
-from modules.process.random_delay import delay
 
 class Clock():
     """ Models a periodical tick event for every 10 seconds. """

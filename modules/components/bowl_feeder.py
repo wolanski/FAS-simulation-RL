@@ -12,9 +12,12 @@ class BowlFeeder(simpy.Resource):
         self.debug = debug
         self.duration = duration
         self.logger = logger
-        self.name = name
-        self.state = "waiting"
         self.env = env
+        self.name = name
+        #self.state = "waiting"
+        self.states = {'status': '', 'queue': 0}
+        self.states['status'] = 'waiting'
+        
         self.faults = []
 
     def add_fault(self, fault):
@@ -25,14 +28,14 @@ class BowlFeeder(simpy.Resource):
             yield req
             if self.debug:
                 print(self.name + ": give")
-            self.state = "giving"
+            #self.state = "giving"
             yield self.env.timeout(delay(self.duration, 1))
             for fault in self.faults:
                 yield fault.spawn()
             if self.debug:
                 print(self.name + ": given")
             self.logger.addMessage(self.name + " GIVEN");
-        self.state = "waiting"
+        #self.state = "waiting"
         return
 
     def spawn(self):

@@ -9,9 +9,12 @@ class Crane(simpy.Resource):
         self.duration = duration
         self.queue = 0
         self.logger = logger
-        self.name = name
-        self.state = "waiting"
         self.env = env
+        self.name = name
+        #self.state = "waiting"
+        self.states = {'status': ''}
+        self.states['status'] = 'waiting'
+        
 
     def process(self):
         if self.debug:
@@ -23,11 +26,11 @@ class Crane(simpy.Resource):
                 print(self.name + ": go_forward")
             self.logger.addMessage(self.name + " FORWARD");
             self.queue = self.queue - 1
-            self.state = "running"
+            #self.state = "running"
             yield self.env.timeout(delay(self.duration, 1))
             if self.debug:
                 print(self.name + ": wait")
-            self.state = "waiting"
+            #self.state = "waiting"
             if self.debug:
                 print(self.name + ": item_taken")
                 print(self.name + ": go_back")
@@ -41,7 +44,7 @@ class Crane(simpy.Resource):
     def spawn(self):
         return self.env.process(self.process())
 
-    def update_state(self):
+    def get_state(self):
         print("_____UPDATE STATE of CRANE")
 
     def get_events(self):
