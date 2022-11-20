@@ -36,9 +36,6 @@ class Conveyor(simpy.Resource):
 
     def spawn(self):
         return self.env.process(self.process())
-    
-    def get_state(self):
-        print("_____UPDATE STATE of CONVEYOR")
 
     def get_events(self):
         return [self.name + " CONVEYOR_GATE"]

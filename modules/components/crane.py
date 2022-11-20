@@ -44,9 +44,6 @@ class Crane(simpy.Resource):
     def spawn(self):
         return self.env.process(self.process())
 
-    def get_state(self):
-        print("_____UPDATE STATE of CRANE")
-
     def get_events(self):
         return [self.name + " FORWARD", self.name + " BACKWARD",
                 self.name + " STOP"]
