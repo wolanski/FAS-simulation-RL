@@ -11,9 +11,8 @@ class Crane(simpy.Resource):
         self.logger = logger
         self.env = env
         self.name = name
-        #self.state = "waiting"
-        self.states = {'status': '', 'queue': 0}
-        self.states['status'] = 'waiting'
+        self.states = {'status': 0, 'run_acc': 0}
+        self.hidden_states = {'accumulated_wear': 0}
         
 
     def process(self):
@@ -21,24 +20,30 @@ class Crane(simpy.Resource):
             print(self.name + ": input")
         self.queue = self.queue + 1
         with self.request() as req:
+            self.states['status'] = '1' #running
             yield req
+
             if self.debug:
                 print(self.name + ": go_forward")
             self.logger.addMessage(self.name + " FORWARD");
             self.queue = self.queue - 1
-            #self.state = "running"
+            self.states['status'] = '1' #running
             yield self.env.timeout(delay(self.duration, 1))
+
             if self.debug:
                 print(self.name + ": wait")
-            #self.state = "waiting"
             if self.debug:
                 print(self.name + ": item_taken")
                 print(self.name + ": go_back")
             self.logger.addMessage(self.name + " BACKWARD");
+            self.states['status'] = '1' #running
             yield self.env.timeout(delay(self.duration, 1))
+
             if self.debug:
                 print(self.name + ": stop")
             self.logger.addMessage(self.name + " STOP");
+            self.states['status'] = '0' #waiting
+            self.states['run_acc'] += 1
         return
 
     def spawn(self):

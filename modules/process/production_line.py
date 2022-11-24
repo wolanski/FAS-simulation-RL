@@ -1,12 +1,16 @@
 import functools
 import simpy
+import random
+from numpy.random import normal
 
 from modules.components.bowl_feeder import BowlFeeder
 from modules.components.clock import Clock
 from modules.components.conveyor import Conveyor
 from modules.components.crane import Crane
 from modules.components.manual_step import ManualStep
-from simulator.logger import Logger 
+from simulator.logger import Logger
+from modules.faults.wear_and_tear import WearAndTear
+from modules.faults.retry_delay import RetryDelay
 
 
 # Models one production line
@@ -19,26 +23,37 @@ class ProductionLine:
         self.debug = debug
         clock = Clock(self.env, self.logger)
         clock.spawn()
+        self.time_step = 1
+        self.next_time_stop = 0
+        self.sim_duration = 1000000
         
         # Line State Space dictionary
-        self.line_states = {'prod_volume_instant': '3', 'Prod_volume_accum': '', 'last_maintannance': ''}
+        self.line_states = {'status': 0, 'prod_volume_accum': 0, 'last_maintannance': 0, 'next_maintannance': 300}
         self.observation_size = len(self.get_observation())
-        # Machine States (index of machine)
-            #   – Machine status (work in progress, failure, wait, maintenance) 
-            #   – Remaining time for current job
-            #   – Time for remaining operations in the queue
-            #   – elapsed time since last maintenance
-            #   – Indication of anomaly (sound, vibration)
-        # Global (System) States
-            #   – instant production volume
-            #   – accumulated production volume
-            #   – elapsed time since last maintenance
-        
-        # Action space (discreet)
-            #   – Schedule Planned Maintenance (for several components)
-            #   – Schedule urgent maintenance for specific machine
         self.action_size = 5
-        self.actions = []
+        self.actions = [-10, -5, 0, 5, 10]
+
+        # Machine States (index of machine)
+            #   – Machine status (waiting, running, in repair) 
+            #   – fault detected (yes/no)
+            #   – elapsed time since last repair/maintenance
+            #   – hidden state: Accumulated wear
+            #   – Indication of anomaly (sound, vibration)
+        # Production Line States
+            #   – Line Status (running, stopped, in repair/maintenance)
+            #   – Last maintenance time
+            #   – Next maintenance time
+            #   – accumulated production volume
+
+        # Action space (discreet)
+            #   – increase/decrease time delay to next maintenance [-10, -5, 0, 5, 10]
+
+        # Reward Policy:
+            # 1. If the line is running, the reward is 1 for each step
+            # number of produced units
+            # 2. If the resource is in a faulted state, the reward is -50
+            # 3. if the change to next maintenance is done in less than 15 days before due, the reward is -5
+            # 4. if the change to next maintenance is done in more than 10 days before due, the reward is -15
 
 
     def _create_resources(self, env, logger, debug):
@@ -100,7 +115,7 @@ class ProductionLine:
             ]
         self.all_modules = self.conveyors + self.bowl_feeders + self.cranes + self.manual_steps
 
-    def _process_sequence(self):
+    def _add_process(self):
         yield self.crane1.spawn()
         yield self.manual_inspection.spawn()
         yield self.conveyor1.spawn()
@@ -134,9 +149,28 @@ class ProductionLine:
         yield self.conveyor11.spawn()
         print("---PROCESS COMPLETED---")
 
+    def add_wear_and_tear_fault(self, env, production_line):
+        yield env.timeout(0)
+        # Simulated WearAndTear faults only apply to Conveyors.
+        conveyor_to_fail = random.sample(production_line.conveyors, 1)[0]
+        conveyor_to_fail.add_fault(
+            WearAndTear(env, conveyor_to_fail, False));
+
+    def add_retry_delay_fault(self, env, production_line):
+        yield env.timeout(0)
+        # Simulated RetryDelay faults only apply to BowlFeeders.
+        bowl_feeder_to_fail = random.sample(production_line.bowl_feeders, 1)[0]
+        bowl_feeder_to_fail.add_fault(
+            RetryDelay(env, bowl_feeder_to_fail, False));
+
+    def delay(duration, percentage_variation):
+        stdev = percentage_variation / 100.0 * duration
+        random_additive_noise = normal(0, stdev)
+        return max(0, int(duration + random_additive_noise))
 
     def get_events(self):
         return functools.reduce(lambda a, b: a + b, [module.get_events() for module in self.all_modules], [])
+
 
     def get_resource_states(self):
         resource_states = {}
@@ -156,6 +190,19 @@ class ProductionLine:
         return observation
 
 
+    def calculate_reward(self):
+        reward = 0
+        # for module in self.all_modules:
+        #     reward += module.calculate_reward()
+
+        #Reward Policy:
+        # 1. If the line is running, the reward is 1 for each step
+        # 2. If the resource is in a faulted state, the reward is -50
+        # 3. if the change to next maintenance is done in less than 15 days before due, the reward is -5
+        # 4. if the change to next maintenance is done in more than 10 days before due, the reward is -15
+
+        return reward
+
     def render(self):
         #  Display state 
         print(self.get_resource_states())
@@ -164,24 +211,47 @@ class ProductionLine:
     def reset(self):
         # Instantiate Process and add it to the SimPy environment
         self._create_resources(self.env, self.logger, self.debug)
-        self.process = self.env.process(self._process_sequence())
+        self.process = self.env.process(self._add_process())
         # Return first state observation
         obs = self.get_observation()
         return obs
 
     def step(self):
-        #  step:
-        #  * A step method takes and passes an action to the environment and returns:
-        #  1. the state new observations (update state, returns observation...)
-        #  2. reward
-        #  3. whether state is terminal (A way to recognise and return a terminal state (end of episode))
-        #  4. additional information
-        #self.env.run(until=self.process)
-        #until = 10
-        # while self.env.peek() < until:
-        #     self.env.step()
+        #FOR EACH STEP        
+        # Check action is legal (raise exception if not):
+            # if legal, perform action -> update maintenance schedule
+
+        # Check if any faults are active (modules)
+            # if so, update line status (stop prod)
+            # conduct repair of module (resource)
+
+        #check if its time for maintenance
+            # if so, perform maintannance, update line status
+
+        # update time step
+        self.next_time_stop += self.time_step
+        # update time related line states
+            # increase last maintenance time
+            # decrease next maintenance time
+        # self.line_states['next_maintenance'] -= self.time_step
+        # self.line_states['last_maintenance'] += self.time_step
+        # STEP SIMULATION
+        #self.env.run(until=self.next_time_stop)
         self.env.step()
-        return self.get_observation()
+
+        # get new observations
+        observations = self.get_observation()
+
+        # check if terminal state is reached
+        terminal = True if self.env.now >= self.sim_duration else False
+
+        # Get reward
+        reward = self.calculate_reward()
+
+        # Return tuple of observations, reward, terminal
+        return (observations, reward, terminal)
+
+
 
 # TO DO
 # design and add resource states and line states (scheduled maintannance)
@@ -189,7 +259,7 @@ class ProductionLine:
 # design rewards
 # add time step (line state?)
 # sim duration
-# alternative assambly line process 
+# alternative assambly line process
 # add maintannance class (with maintannance delay time and updationg state of line)
 # (???) failure states and logic to machines
 # (???) add sound and vibration state

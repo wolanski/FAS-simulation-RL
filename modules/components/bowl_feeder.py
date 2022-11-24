@@ -14,10 +14,8 @@ class BowlFeeder(simpy.Resource):
         self.logger = logger
         self.env = env
         self.name = name
-        #self.state = "waiting"
-        self.states = {'status': '', 'queue': 0}
-        self.states['status'] = 'waiting'
-        
+        self.states = {'status': 0, 'run_acc': 0, 'fault': 0}
+        self.hidden_states = {'accumulated_wear': 0}
         self.faults = []
 
     def add_fault(self, fault):
@@ -25,17 +23,25 @@ class BowlFeeder(simpy.Resource):
 
     def process(self):
         with self.request() as req:
+            self.states['status'] = 1 #running
             yield req
+
             if self.debug:
                 print(self.name + ": give")
-            #self.state = "giving"
+            self.states['status'] = 1 #running
             yield self.env.timeout(delay(self.duration, 1))
+
             for fault in self.faults:
+                self.states['fault'] = 1 #fault
+                self.states['status'] = 0 #waiting
                 yield fault.spawn()
+
             if self.debug:
                 print(self.name + ": given")
+            self.states['fault'] = 0 #no fault
+            self.states['status'] = 1 #running
             self.logger.addMessage(self.name + " GIVEN");
-        #self.state = "waiting"
+            self.states['run_acc'] += 1
         return
 
     def spawn(self):
