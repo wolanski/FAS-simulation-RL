@@ -11,7 +11,7 @@ class Clock():
             if self.debug:
                 print("Tick")
             self.logger.addMessage("TICK");
-            yield self.env.timeout(10000)
+            yield self.env.timeout(10)
 
     def spawn(self):
         return self.env.process(self.process())

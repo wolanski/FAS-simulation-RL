@@ -11,7 +11,7 @@ class Crane(simpy.Resource):
         self.logger = logger
         self.env = env
         self.name = name
-        self.states = {'status': 0, 'run_acc': 0}
+        self.states = {'state': 0, 'run_acc': 0, 'last_repair': 0, 'anomaly': 0}
         self.hidden_states = {'accumulated_wear': 0}
         
 
@@ -20,14 +20,14 @@ class Crane(simpy.Resource):
             print(self.name + ": input")
         self.queue = self.queue + 1
         with self.request() as req:
-            self.states['status'] = '1' #running
+            self.states['state'] = '1' #running
             yield req
 
             if self.debug:
                 print(self.name + ": go_forward")
             self.logger.addMessage(self.name + " FORWARD");
             self.queue = self.queue - 1
-            self.states['status'] = '1' #running
+            self.states['state'] = '1' #running
             yield self.env.timeout(delay(self.duration, 1))
 
             if self.debug:
@@ -36,13 +36,13 @@ class Crane(simpy.Resource):
                 print(self.name + ": item_taken")
                 print(self.name + ": go_back")
             self.logger.addMessage(self.name + " BACKWARD");
-            self.states['status'] = '1' #running
+            self.states['state'] = '1' #running
             yield self.env.timeout(delay(self.duration, 1))
 
             if self.debug:
                 print(self.name + ": stop")
             self.logger.addMessage(self.name + " STOP");
-            self.states['status'] = '0' #waiting
+            self.states['state'] = '0' #waiting
             self.states['run_acc'] += 1
         return
 
@@ -52,3 +52,9 @@ class Crane(simpy.Resource):
     def get_events(self):
         return [self.name + " FORWARD", self.name + " BACKWARD",
                 self.name + " STOP"]
+
+    def repair(self):
+        pass
+
+    def do_maintainence(self):
+        pass

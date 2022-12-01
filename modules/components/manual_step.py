@@ -11,7 +11,7 @@ class ManualStep(simpy.Resource):
         self.logger = logger
         self.env = env
         self.name = name
-        self.states = {'status': 0}
+        self.states = {'state': 0, 'run_acc': 0}
         
 
     def process(self):
@@ -21,13 +21,13 @@ class ManualStep(simpy.Resource):
         if (self.queue >= 5):
             self.logger.addMessage(self.name + " QUEUE_ALARM");
         with self.request() as req:
-            self.states['status'] = '1' #running
+            self.states['state'] = '1' #running
             yield req
 
             if self.debug:
                 print(self.name + ": process")
             self.queue = self.queue - 1
-            self.states['status'] = '1' #running
+            self.states['state'] = '1' #running
             yield self.env.timeout(delay(self.duration, 5))
 
             if self.debug:
@@ -35,7 +35,7 @@ class ManualStep(simpy.Resource):
             self.logger.addMessage(self.name + " OK");
             if self.debug:
                 print(self.name + ": wait")
-            self.states['status'] = '1' #running
+            self.states['state'] = '0' #waiting
         return
 
     def spawn(self):
