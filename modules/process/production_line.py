@@ -25,9 +25,10 @@ class ProductionLine:
         clock.spawn()
         self.step_no = 0
         self.sim_duration = 100000
-        
+        self.last_next_maint = 0
+
         # Line State Space dictionary
-        self.line_states = {'state': 0, 'time': 0, 'prod_volume_acc': 0, 'last_maint': 0, 'next_maint': 60}
+        self.line_states = {'state': 0, 'time': 0, 'prod_volume_acc': 0, 'last_maint': 0, 'next_maint': 10}
         self.actions = [-20, -10, -5, 0, 5, 10, 20]
         self.action_size = len(self.actions)
         self.observation_size = 0
@@ -173,7 +174,6 @@ class ProductionLine:
     def get_events(self):
         return functools.reduce(lambda a, b: a + b, [module.get_events() for module in self.all_modules], [])
 
-
     def get_resource_states(self):
         resource_states = {}
         for i in range (0, len(self.all_modules)):
@@ -194,14 +194,22 @@ class ProductionLine:
 
     def calculate_reward(self):
         reward = 0
-        # for module in self.all_modules:
-        #     reward += module.calculate_reward()
-
         #Reward Policy:
         # 1. If the line is running, the reward is 1 for each step
+        # number of produced units
         # 2. If the resource is in a faulted state, the reward is -50
         # 3. if the change to next maintenance is done in less than 15 days before due, the reward is -5
         # 4. if the change to next maintenance is done in more than 10 days before due, the reward is -15
+        if self.line_states['state']==1:
+            reward = 1
+        elif self.line_states['state']==0:
+            reward = -50
+        if self.last_next_maint != self.line_states['next_maint']:
+            if (self.line_states['next_maint'] - self.line_states['time']) < 15:
+                reward = -10
+            elif (self.line_states['next_maint'] - self.line_states['time']) < 10:
+                reward = -15
+            self.last_next_maint = self.line_states['next_maint']
 
         return reward
 
@@ -262,15 +270,15 @@ class ProductionLine:
 # TO DO
 # OK design and add resource states and line states (scheduled maintannance)
 # (???) add sound and vibration state
-# failure states and logic to machines
+# failure states and action logic to machines
 # add maintannance and repair function in line (with maintannance delay time and updating state of line, reward)
 
-# encode passing time, new day iterator event
-# add time step (line state?)
-# sim duration
+# OK encode passing time, new day iterator event
+# OK add time step (line state?)
+# OK sim duration
 
 # OK design action space
 
-# design Rewards
+# OK design Rewards
 
 # (Nice to have) alternative assambly line process (with gates and parallel machines)

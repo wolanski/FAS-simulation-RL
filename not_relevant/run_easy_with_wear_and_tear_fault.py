@@ -23,7 +23,8 @@ def fault():
     yield env.timeout(0)
     print("FAULT")
     production_line.conveyor5.add_fault(
-        WearAndTear(env, production_line.conveyor5));
+        WearAndTear(env, production_line.conveyor5))
+
 env.process(fault())
 
 # Putting in 30 items, waiting for them to be done.
