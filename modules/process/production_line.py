@@ -29,7 +29,7 @@ class ProductionLine:
 
         # Line State Space dictionary
         self.line_states = {'state': 0, 'time': 0, 'prod_volume_acc': 0, 'last_maint': 0, 'next_maint': 10}
-        self.actions = [-20, -10, -5, 0, 5, 10, 20]
+        self.actions = [0, 1, 2, 3, 4, 5, 6]
         self.action_size = len(self.actions)
         self.observation_size = 0
 
@@ -49,14 +49,14 @@ class ProductionLine:
             #   OK current day/date 'day_acc'
 
         # Action space (discreet)
-            #   – increase/decrease time delay to next maintenance [-10, -5, 0, 5, 10]
+            #   OK increase/decrease time delay to next maintenance [-20, -10, -5, 0, 5, 10, 20]
 
         # Reward Policy:
-            # 1. If the line is running, the reward is 1 for each step
-            # number of produced units
-            # 2. If the resource is in a faulted state, the reward is -50
-            # 3. if the change to next maintenance is done in less than 15 days before due, the reward is -5
-            # 4. if the change to next maintenance is done in more than 10 days before due, the reward is -15
+            #   OK 1. If the line is running, the reward is 1 for each step
+            #   number of produced units
+            #   OK 2. If the resource is in a faulted state, the reward is -50
+            #   OK 3. if the change to next maintenance is done in less than 15 days before due, the reward is -5
+            #   OK 4. if the change to next maintenance is done in more than 10 days before due, the reward is -15
 
 
     def _create_resources(self, env, logger, debug):
@@ -152,12 +152,17 @@ class ProductionLine:
         yield self.conveyor11.spawn()
         print("---PROCESS COMPLETED---")
 
-    def add_wear_and_tear_fault(self, env, production_line):
-        yield env.timeout(0)
-        # Simulated WearAndTear faults only apply to Conveyors.
-        conveyor_to_fail = random.sample(production_line.conveyors, 1)[0]
-        conveyor_to_fail.add_fault(
-            WearAndTear(env, conveyor_to_fail, False));
+    # def add_wear_and_tear_fault(self, env, production_line):
+    #     yield env.timeout(0)
+    #     # Simulated WearAndTear faults only apply to Conveyors.
+    #     conveyor_to_fail = random.sample(production_line.conveyors, 1)[0]
+    #     conveyor_to_fail.add_fault(
+    #         WearAndTear(env, conveyor_to_fail, False));
+
+    # def fault():
+    #     yield env.timeout(0)
+    #     print("FAULT")
+    #     production_line.conveyor5.add_fault(WearAndTear(env, production_line.conveyor5))
 
     def add_retry_delay_fault(self, env, production_line):
         yield env.timeout(0)
@@ -176,9 +181,10 @@ class ProductionLine:
 
     def get_resource_states(self):
         resource_states = {}
-        for i in range (0, len(self.all_modules)):
-            resource_states.update({self.all_modules[i].name: self.all_modules[i].states})
+        for module in self.all_modules:
+            resource_states.update({module.name: module.states})
         return resource_states
+            
 
     def get_line_state(self):
         return self.line_states
@@ -190,7 +196,6 @@ class ProductionLine:
         for module in self.all_modules:
             observation.extend([v for k,v in module.states.items()])
         return observation
-
 
     def calculate_reward(self):
         reward = 0
@@ -205,14 +210,46 @@ class ProductionLine:
         elif self.line_states['state']==0:
             reward = -50
         if self.last_next_maint != self.line_states['next_maint']:
-            if (self.line_states['next_maint'] - self.line_states['time']) < 15:
+            if (self.line_states['next_maint'] - self.line_states['time']) < 1500:
                 reward = -10
-            elif (self.line_states['next_maint'] - self.line_states['time']) < 10:
+            elif (self.line_states['next_maint'] - self.line_states['time']) < 1000:
                 reward = -15
             self.last_next_maint = self.line_states['next_maint']
 
         return reward
 
+    def islegal(self, action):
+        if action not in self.actions:
+            raise ValueError('Requested action: %s is not alowed' % action)
+
+    def adjust_next_maintenance(self, action):
+        # increase/decrease time delay to next maintenance
+        action_adjustment = [-2000, -1000, -500, 0, 500, 1000, 2000]
+        self.line_states['next_maint'] = action_adjustment[action]
+
+    def check_machine_failure(self):
+        # Check if any of the machines has failed
+        for module in self.all_modules:
+            if module.states['state'] == 2:
+                return True
+        return False
+
+    def do_line_maintenance(self):
+        # Do line maintenance
+        for module in self.all_modules:
+            module.do_maintenance()
+
+    def repair_machines(self):
+        # Repair machine
+        for module in self.all_modules:
+            if module.states['state'] == 2:
+                module.repair()
+
+    # def add_fault(self, module):
+    #     yield env.timeout(0)
+    #     print("FAULT, module: %s" % module.name)
+    #     production_line.module.add_fault(WearAndTear(env, module))
+            
     def render(self):
         #  Display state 
         print(self.get_resource_states())
@@ -227,28 +264,41 @@ class ProductionLine:
         obs = self.get_observation()
         return obs
 
-    def step(self):
+    def step(self, action):
+        # test RL algorithm if it works (time scale per step) in case env.step() is done 10/100/1000 times for each RL step
+        
+        #add fault hapens in modules based on accumulated wear and tear
 
-        # test RL algorithm if it works in case env.step() is done 10/100/1000 times for each RL step
-        #FOR EACH STEP        
-        # Check action is legal (raise exception if not):
-            # if legal, perform action -> update maintenance schedule
+        #FOR EACH STEP
+        # Check action is legal (raise exception if not):        
+        self.islegal(action)
 
-        # Check if any faults are active (modules)
-            # if so, update line status (stop prod)
+        # if legal, perform action -> update maintenance schedule
+        self.adjust_next_maintenance(action)
+
+        # Check if any faults are active (modules), if failed, set line state to stopped
             # conduct repair of module (resource), machine fault reset
+        if self.check_machine_failure():
+            self.line_states['state'] = 0
+            self.repair_machines()
+        else:
+            self.line_states['state'] = 1
+
 
         #check if its time for maintenance
             # if so, perform maintannance, update line status, (reset run_acc for machines)
+        if self.line_states['time'] == self.line_states['next_maint']:
+            self.line_states['state'] = 0
+            self.do_line_maintenance()
+            self.line_states['next_maint'] += self.line_states['next_maint'] - self.line_states['last_maint']
+            self.line_states['last_maint'] = self.line_states['time']
+        else:
+            self.line_states['state'] = 1
 
         # update time step
         self.step_no += 1
         self.line_states['time'] = self.env.now//60
-        # update time related line states
-            # increase last maintenance time
-            # decrease next maintenance time
-        # self.line_states['next_maintenance'] -= self.time_step
-        # self.line_states['last_maintenance'] += self.time_step
+
         # STEP SIMULATION
         #self.env.run(until=self.next_time_stop)
         self.env.step()

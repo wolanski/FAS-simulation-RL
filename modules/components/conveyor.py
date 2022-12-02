@@ -18,9 +18,6 @@ class Conveyor(simpy.Resource):
         self.hidden_states = {'accumulated_wear': 0}
         self.faults = []
 
-    def add_fault(self, fault):
-        self.faults.append(fault)
-
     def process(self):
         with self.request() as req:
             self.states['state'] = 1 #running
@@ -33,7 +30,7 @@ class Conveyor(simpy.Resource):
             yield self.env.timeout(delay(self.duration, 1))
 
             for fault in self.faults:
-                self.states['state'] = 3 #fault
+                self.states['state'] = 2 #fault
                 yield fault.spawn()
 
             self.states['state'] = 1 #running
@@ -42,14 +39,25 @@ class Conveyor(simpy.Resource):
             self.states['run_acc'] += 1
         return
 
-    def spawn(self):
-        return self.env.process(self.process())
 
     def get_events(self):
         return [self.name + " CONVEYOR_GATE"]
 
+    def add_wear(self):
+        # accumulate wear
+        # self.faults.append(fault)
+        #print("FAULT, module: %s" % module.name)
+        pass
+
+    def add_fault(self, fault):
+        self.faults.append(fault)
+
     def repair(self):
+
         pass
 
     def do_maintainence(self):
         pass
+
+    def spawn(self):
+        return self.env.process(self.process())
