@@ -118,6 +118,24 @@ class ProductionLine:
             ]
         self.all_modules = self.conveyors + self.bowl_feeders + self.cranes + self.manual_steps
 
+    def _create_resources_simple(self, env, logger, debug):
+                # The modules of the assembly line are created here in order, but wired together in the process definition.
+        # All these are simpy resources with a limited capacity.
+        self.input = simpy.resources.store.Store(self.env)
+        self.crane1 = Crane("CRANE1", 30, logger, env, debug)
+        self.manual_inspection = ManualStep("MANUAL_INSPECTION", 37, logger, env, debug)
+        self.conveyor1 = Conveyor("CONVEYOR1", 30, logger, env, debug)
+        self.bowl1 = BowlFeeder("BOWL1", 5, logger, env, debug)
+        self.manual_add_components1 = ManualStep("MANUAL_ADD_COMPONENTS1", 21, logger, env, debug)
+        self.conveyor2 = Conveyor("CONVEYOR2", 30, logger, env, debug)
+        self.output = simpy.resources.store.Store(self.env)
+
+        self.conveyors = [self.conveyor1, self.conveyor2]
+        self.bowl_feeders = [self.bowl1]
+        self.cranes = [self.crane1]
+        self.manual_steps = [self.manual_inspection, self.manual_add_components1]
+        self.all_modules = self.conveyors + self.bowl_feeders + self.cranes + self.manual_steps
+
     def _add_process(self):
         yield self.crane1.spawn()
         yield self.manual_inspection.spawn()
@@ -150,6 +168,15 @@ class ProductionLine:
         yield self.conveyor10.spawn()
         yield self.manual_tighten_bolts3.spawn()
         yield self.conveyor11.spawn()
+        print("---PROCESS COMPLETED---")
+
+    def _add_process_simple(self):
+        yield self.crane1.spawn()
+        yield self.manual_inspection.spawn()
+        yield self.conveyor1.spawn()
+        yield self.bowl1.spawn()
+        yield self.manual_add_components1.spawn()
+        yield self.conveyor2.spawn()
         print("---PROCESS COMPLETED---")
 
     # def add_wear_and_tear_fault(self, env, production_line):
@@ -257,8 +284,10 @@ class ProductionLine:
       
     def reset(self):
         # Instantiate Process and add it to the SimPy environment
-        self._create_resources(self.env, self.logger, self.debug)
-        self.process = self.env.process(self._add_process())
+        # self._create_resources(self.env, self.logger, self.debug)
+        self._create_resources_simple(self.env, self.logger, self.debug)
+        # self.process = self.env.process(self._add_process())
+        self.process = self.env.process(self._add_process_simple())
         self.observation_size = len(self.get_observation())
         # Return first state observation
         obs = self.get_observation()
@@ -318,11 +347,14 @@ class ProductionLine:
 
 
 # TO DO
-# OK design and add resource states and line states (scheduled maintannance)
-# (???) add sound and vibration state
+# add simple process
+
+# add wear and tear logic to conveyor
 # failure states and action logic to machines
+# (???) add sound and vibration state
 # add maintannance and repair function in line (with maintannance delay time and updating state of line, reward)
 
+# OK design and add resource states and line states (scheduled maintannance)
 # OK encode passing time, new day iterator event
 # OK add time step (line state?)
 # OK sim duration

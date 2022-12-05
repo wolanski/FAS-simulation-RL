@@ -40,24 +40,34 @@ class Conveyor(simpy.Resource):
         return
 
 
-    def get_events(self):
-        return [self.name + " CONVEYOR_GATE"]
-
     def add_wear(self):
         # accumulate wear
         # self.faults.append(fault)
         #print("FAULT, module: %s" % module.name)
         pass
 
-    def add_fault(self, fault):
-        self.faults.append(fault)
+    def add_fault():
+        pass
+
+    # def add_fault(self, fault):
+    #     self.faults.append(fault)
+
 
     def repair(self):
-
-        pass
+        self.states['run_acc'] = 0 #maybe do not reset?
+        self.hidden_states['accumulated_wear'] = 0
+        self.states['last_repair'] = self.env.now//60
+        #self.states['state'] = 1 #running
 
     def do_maintainence(self):
-        pass
+        self.states['run_acc'] = 0 #maybe do not reset?
+        self.hidden_states['accumulated_wear'] = 0
+        self.states['last_repair'] = self.env.now//60
+        #self.states['state'] = 1 #running
+
+
+    def get_events(self):
+        return [self.name + " CONVEYOR_GATE"]
 
     def spawn(self):
         return self.env.process(self.process())
