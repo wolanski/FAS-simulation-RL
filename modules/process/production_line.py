@@ -27,12 +27,6 @@ class ProductionLine:
         self.sim_duration = 100000
         self.last_next_maint = 0
 
-        # Line State Space dictionary
-        self.line_states = {'state': 0, 'time': 0, 'prod_volume_acc': 0, 'last_maint': 0, 'next_maint': 10}
-        self.actions = [0, 1, 2, 3, 4, 5, 6]
-        self.action_size = len(self.actions)
-        self.observation_size = 0
-
         # Machine States (index of machine)
             #   OK Machine State ('state': 0.waiting, 1.running, 2.faulted)
             #          - action: if machine is faulted, the whole line is stopped
@@ -40,7 +34,6 @@ class ProductionLine:
             #   OK last repair time ('last_repair': day no/date) OR (elapsed time since last repair (days acc) / run_acc)
             #   OK Indication of anomaly, sound, vibration ('anomaly': 0) yes/no
             #   OK hidden state: Accumulated wear
-
         # Production Line States
             #   OK Line State ('state': 0.stopped, 1.running, 2.line maintenance/machine repair)
             #   OK Last maintenance time ('last_maintenance': day no/date) OR (elapsed time since last maintenance (days acc))
@@ -51,12 +44,11 @@ class ProductionLine:
         # Action space (discreet)
             #   OK increase/decrease time delay to next maintenance [-20, -10, -5, 0, 5, 10, 20]
 
-        # Reward Policy:
-            #   OK 1. If the line is running, the reward is 1 for each step
-            #   number of produced units
-            #   OK 2. If the resource is in a faulted state, the reward is -50
-            #   OK 3. if the change to next maintenance is done in less than 15 days before due, the reward is -5
-            #   OK 4. if the change to next maintenance is done in more than 10 days before due, the reward is -15
+        # Line State Space dictionary
+        self.line_states = {'state': 0, 'time': 0, 'prod_volume_acc': 0, 'last_maint': 0, 'next_maint': 10}
+        self.actions = [0, 1, 2, 3, 4, 5, 6]
+        self.action_size = len(self.actions)
+        self.observation_size = 0
 
 
     def _create_resources(self, env, logger, debug):
@@ -179,29 +171,23 @@ class ProductionLine:
         yield self.conveyor2.spawn()
         print("---PROCESS COMPLETED---")
 
-    # def add_wear_and_tear_fault(self, env, production_line):
+
+    # def add_retry_delay_fault(self, env, production_line):
     #     yield env.timeout(0)
-    #     # Simulated WearAndTear faults only apply to Conveyors.
-    #     conveyor_to_fail = random.sample(production_line.conveyors, 1)[0]
-    #     conveyor_to_fail.add_fault(
-    #         WearAndTear(env, conveyor_to_fail, False));
+    #     # Simulated RetryDelay faults only apply to BowlFeeders.
+    #     bowl_feeder_to_fail = random.sample(production_line.bowl_feeders, 1)[0]
+    #     bowl_feeder_to_fail.add_fault(
+    #         RetryDelay(env, bowl_feeder_to_fail, False));
 
-    # def fault():
+    # def delay(duration, percentage_variation):
+    #     stdev = percentage_variation / 100.0 * duration
+    #     random_additive_noise = normal(0, stdev)
+    #     return max(0, int(duration + random_additive_noise))
+
+    # def add_fault(self, module):
     #     yield env.timeout(0)
-    #     print("FAULT")
-    #     production_line.conveyor5.add_fault(WearAndTear(env, production_line.conveyor5))
-
-    def add_retry_delay_fault(self, env, production_line):
-        yield env.timeout(0)
-        # Simulated RetryDelay faults only apply to BowlFeeders.
-        bowl_feeder_to_fail = random.sample(production_line.bowl_feeders, 1)[0]
-        bowl_feeder_to_fail.add_fault(
-            RetryDelay(env, bowl_feeder_to_fail, False));
-
-    def delay(duration, percentage_variation):
-        stdev = percentage_variation / 100.0 * duration
-        random_additive_noise = normal(0, stdev)
-        return max(0, int(duration + random_additive_noise))
+    #     print("FAULT, module: %s" % module.name)
+    #     production_line.module.add_fault(WearAndTear(env, module))
 
     def get_events(self):
         return functools.reduce(lambda a, b: a + b, [module.get_events() for module in self.all_modules], [])
@@ -212,7 +198,6 @@ class ProductionLine:
             resource_states.update({module.name: module.states})
         return resource_states
             
-
     def get_line_state(self):
         return self.line_states
 
@@ -223,6 +208,7 @@ class ProductionLine:
         for module in self.all_modules:
             observation.extend([v for k,v in module.states.items()])
         return observation
+
 
     def calculate_reward(self):
         reward = 0
@@ -265,6 +251,8 @@ class ProductionLine:
         # Do line maintenance
         for module in self.all_modules:
             module.do_maintenance()
+        if self.debug:
+            print("LINE MAINTENANCE DONE")
 
     def repair_machines(self):
         # Repair machine
@@ -272,10 +260,6 @@ class ProductionLine:
             if module.states['state'] == 2:
                 module.repair()
 
-    # def add_fault(self, module):
-    #     yield env.timeout(0)
-    #     print("FAULT, module: %s" % module.name)
-    #     production_line.module.add_fault(WearAndTear(env, module))
             
     def render(self):
         #  Display state 
@@ -295,7 +279,6 @@ class ProductionLine:
 
     def step(self, action):
         # test RL algorithm if it works (time scale per step) in case env.step() is done 10/100/1000 times for each RL step
-        
         #add fault hapens in modules based on accumulated wear and tear
 
         #FOR EACH STEP
@@ -349,8 +332,8 @@ class ProductionLine:
 # TO DO
 # add simple process
 
-# add wear and tear logic to conveyor
-# failure states and action logic to machines
+OK # add wear and tear logic to conveyor, simple
+# failure states and action logic to all machines
 # (???) add sound and vibration state
 # add maintannance and repair function in line (with maintannance delay time and updating state of line, reward)
 
@@ -363,4 +346,5 @@ class ProductionLine:
 
 # OK design Rewards
 
+# schedule for maintannance policy (maybe partial maintannance if more machine/parallel machines)
 # (Nice to have) alternative assambly line process (with gates and parallel machines)
