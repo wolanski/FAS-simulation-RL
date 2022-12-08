@@ -2,19 +2,12 @@
 #                           1 Import packages                                  #
 ################################################################################
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import random
-import torch
-import torch.nn as nn
 import torch.optim as optim
 import modules.rl_agents.common as cm
-import modules.rl_agents.ddqn as ddqn
+from modules.rl_agents import ddql
 from modules.process.production_line import ProductionLine
-# Use a double ended queue (deque) for memory
-# When memory is full, this will replace the oldest value with the new one
-from collections import deque
 # Supress all warnings (e.g. deprecation warnings) for regular use
 import warnings
 warnings.filterwarnings("ignore")
@@ -45,8 +38,8 @@ def ddqn_main():
     ############################################################################
     
     # Set up policy and target neural nets
-    policy_net = ddqn.DQN(observation_space, action_space)
-    target_net = ddqn.DQN(observation_space, action_space)
+    policy_net = ddql.DQN(observation_space, action_space)
+    target_net = ddql.DQN(observation_space, action_space)
     
     # Set loss function and optimizer
     policy_net.optimizer = optim.Adam(

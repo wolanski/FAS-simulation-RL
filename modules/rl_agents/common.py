@@ -4,11 +4,9 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import random
 import torch
 import torch.nn as nn
-import torch.optim as optim
 # Use a double ended queue (deque) for memory
 # When memory is full, this will replace the oldest value with the new one
 from collections import deque
@@ -30,24 +28,26 @@ LEARNING_RATE = 0.0003
 MEMORY_SIZE = 1500000
 # Sample batch size for policy network update
 BATCH_SIZE = 3
+
 # Number of game steps to play before starting training (all random actions)
-REPLAY_START_SIZE = 365 * 5
+REPLAY_START_SIZE = 10000
 # Time step between actions
 TIME_STEP = 1
 # Number of steps between policy -> target network update
 SYNC_TARGET_STEPS = 365
+
 # Exploration rate (episolon) is probability of choosign a random action
 EXPLORATION_MAX = 1.0
 EXPLORATION_MIN = 0.01
 # Reduction in epsilon with each game step
 EXPLORATION_DECAY = 0.999
+
 # Simulation duration
 #SIM_DURATION = 365
-
 SIM_DURATION = 14400
 
 # Training episodes
-TRAINING_EPISODES = 5
+TRAINING_EPISODES = 20
 
 
 ################################################################################

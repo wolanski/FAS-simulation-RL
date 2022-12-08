@@ -2,23 +2,14 @@
 #                           1 Import packages                                  #
 ################################################################################
 
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import random
 import torch
 import torch.nn as nn
-import torch.optim as optim
-
-# Use a double ended queue (deque) for memory
-# When memory is full, this will replace the oldest value with the new one
-from collections import deque
-
 # Supress all warnings (e.g. deprecation warnings) for regular use
 import warnings
-warnings.filterwarnings("ignore")
-
 import modules.rl_agents.common as cm
+warnings.filterwarnings("ignore")
 
 ################################################################################
 #                      3 Define DQN (Deep Q Network) class                     #
