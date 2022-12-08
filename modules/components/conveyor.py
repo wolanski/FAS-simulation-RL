@@ -7,26 +7,28 @@ class Conveyor(simpy.Resource):
     before processing the next item. There is no queue for the conveyor.
     Simulated WearAndTear faults only apply to Conveyors.
     """
-    def __init__(self, name, duration, logger, env, debug=True):
+    #def __init__(self, name, duration, logger, env, debug=True):
+    def __init__(self, name, duration, env, debug=True):
         super(Conveyor, self).__init__(env)
         self.debug = debug
         self.duration = duration
-        self.logger = logger
+        #self.logger = logger
         self.env = env
         self.name = name
+        #   Machine State ('state': 0.waiting, 1.running, 2.faulted)
         self.states = {'state': 0, 'run_acc': 0, 'last_repair': 0, 'anomaly': 0}
         self.hidden_states = {'accumulated_wear': 0}
         self.faults = []
 
     def process(self):
         with self.request() as req:
-            while self.states['state'] != 2:
+            if self.states['state'] != 2:
                 self.states['state'] = 1 #running
                 yield req
 
                 if self.debug:
                     print(self.name + ": input")
-                self.logger.addMessage(self.name + " CONVEYOR_GATE");
+                #self.logger.addMessage(self.name + " CONVEYOR_GATE");
                 #self.states['state'] = 1 #running
                 yield self.env.timeout(delay(self.duration, 1))
 
@@ -34,9 +36,10 @@ class Conveyor(simpy.Resource):
                 #     self.states['state'] = 2 #fault
                 #     yield fault.spawn()
 
-                if self.hidden_states['accumulated_wear'] > 300:
+                if self.hidden_states['accumulated_wear'] > 100:
                     self.states['state'] = 2 #fault
-                    return self.fault()
+                    #return self.fault()
+                    yield self.fault()
 
                 #self.states['state'] = 1 #running
                 if self.debug:
@@ -51,30 +54,32 @@ class Conveyor(simpy.Resource):
         self.hidden_states['accumulated_wear'] += 1
 
     def fault(self):
-        delay_factor = 600 #(exp(self.t/5.0) - 1 ) / 30
-        extra_delay = delay_factor * self.duration
-        if self.debug:
-            print("FAULT: %s, extra delay: %s" % (self.name, extra_delay))
+        delay_factor = 1200 #(exp(self.t/5.0) - 1 ) / 30
+        extra_delay = delay_factor #* self.duration
+        #if self.debug:
+        #print("FAULT: %s, extra delay: %s" % (self.name, extra_delay))
         return self.env.timeout(extra_delay)
 
     # def add_fault(self, fault):
     #     self.faults.append(fault)
 
     def repair(self):
-        self.states['run_acc'] = 0 #maybe do not reset?
+        #self.states['run_acc'] = 0 #maybe do not reset?
         self.hidden_states['accumulated_wear'] = 0
         self.states['last_repair'] = self.env.now//60
-        repair_delay = 1500
+        repair_delay = 3000
         self.states['state'] = 0 #waiting
         if self.debug:
             print("REPAIR: %s, delay: %s" % (self.name, repair_delay))
         return self.env.timeout(repair_delay)
 
-    def do_maintainence(self):
-        self.states['run_acc'] = 0    #maybe do not reset?
+    def do_maintenance(self):
+        #self.states['run_acc'] = 0    #maybe do not reset?
         self.hidden_states['accumulated_wear'] = 0     #maybe do not reset completely?
         self.states['last_repair'] = self.env.now//60     #maybe do not reset?
+        maintenance_delay = 2000
         #self.states['state'] = 1 #running
+        return self.env.timeout(maintenance_delay)
 
 
     def get_events(self):

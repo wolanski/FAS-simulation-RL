@@ -20,14 +20,14 @@ class Crane(simpy.Resource):
             print(self.name + ": input")
         self.queue = self.queue + 1
         with self.request() as req:
-            self.states['state'] = '1' #running
+            self.states['state'] = 1 #running
             yield req
 
             if self.debug:
                 print(self.name + ": go_forward")
             self.logger.addMessage(self.name + " FORWARD");
             self.queue = self.queue - 1
-            self.states['state'] = '1' #running
+            self.states['state'] = 1 #running
             yield self.env.timeout(delay(self.duration, 1))
 
             if self.debug:
@@ -36,13 +36,13 @@ class Crane(simpy.Resource):
                 print(self.name + ": item_taken")
                 print(self.name + ": go_back")
             self.logger.addMessage(self.name + " BACKWARD");
-            self.states['state'] = '1' #running
+            self.states['state'] = 1 #running
             yield self.env.timeout(delay(self.duration, 1))
 
             if self.debug:
                 print(self.name + ": stop")
             self.logger.addMessage(self.name + " STOP");
-            self.states['state'] = '0' #waiting
+            self.states['state'] = 0 #waiting
             self.states['run_acc'] += 1
         return
 
@@ -56,5 +56,5 @@ class Crane(simpy.Resource):
     def repair(self):
         pass
 
-    def do_maintainence(self):
+    def do_maintenance(self):
         pass

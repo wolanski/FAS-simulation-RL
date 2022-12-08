@@ -51,5 +51,5 @@ class BowlFeeder(simpy.Resource):
     def repair(self):
         pass
 
-    def do_maintainence(self):
+    def do_maintenance(self):
         pass
