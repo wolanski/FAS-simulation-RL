@@ -12,7 +12,8 @@ class ManualStep(simpy.Resource):
         #self.logger = logger
         self.env = env
         self.name = name
-        self.states = {'state': 0, 'run_acc': 0}
+        #self.states = {'state': 0, 'run_acc': 0}
+        self.states = {'state': 0}
         
 
     def process(self):
@@ -38,7 +39,7 @@ class ManualStep(simpy.Resource):
             if self.debug:
                 print(self.name + ": wait")
             self.states['state'] = 0 #waiting
-            self.states['run_acc'] += 1
+            #self.states['run_acc'] += 1
         return
 
     def spawn(self):

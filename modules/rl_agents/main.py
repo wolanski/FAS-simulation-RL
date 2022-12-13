@@ -72,6 +72,8 @@ def ddqn_main():
     results_run = []
     results_exploration = []
     results_score = []
+    next_maint_t = []
+    wear_accum_t = []
     
     # Continue repeating games (episodes) until target complete
     while continue_learning:
@@ -94,7 +96,7 @@ def ddqn_main():
         time = []
         line_state = []
         next_maint = []
-        conv_state = []
+        #conv_state = []
         conv_wear = []
         #last_fail = []
         rewards = []
@@ -118,6 +120,7 @@ def ddqn_main():
             
             # Get action to take (se eval mode to avoid dropout layers)
             policy_net.eval()
+            #print(state)
             action = policy_net.act(state)
             
             ####################################################################
@@ -129,10 +132,10 @@ def ddqn_main():
             total_reward += reward
 
             # Update trackers
-            time.append(state_next[1])
-            line_state.append(state_next[0])
-            next_maint.append(state_next[4])
-            conv_state.append(state_next[5])
+            time.append(state_next[0])
+            line_state.append(state_next[1])
+            next_maint.append(state_next[2] - state_next[0])
+            #conv_state.append(state_next[5])
             conv_wear.append([v for k,v in sim.get_resource_states()['hidden states'].items()][0])
             #last_fail.append(p_d.last_fail)
             rewards.append(reward)
@@ -179,6 +182,8 @@ def ddqn_main():
                 results_run.append(run)
                 results_exploration.append(exploration)
                 results_score.append(total_reward)
+                next_maint_t.extend(next_maint)
+                wear_accum_t.extend(conv_wear)
                 
                 ################################################################
                 #             18b Check for end of learning                    #
@@ -214,16 +219,16 @@ def ddqn_main():
     ############################################################################
     
     # Add last run to DataFrame. summarise, and return
-    run_details = pd.DataFrame()
-    run_details['time'] = time 
-    run_details['line_state'] = line_state
-    run_details['next_maint'] = next_maint
-    run_details['conv_state'] = conv_state
-    run_details['conv_wear'] = conv_wear
-    #run_details['last_fail'] = last_fail
-    run_details['reward'] = rewards  
+    # run_details = pd.DataFrame()
+    # run_details['time'] = time
+    # run_details['line_state'] = line_state
+    # run_details['next_maint'] = next_maint
+    # #run_details['conv_state'] = conv_state
+    # run_details['conv_wear'] = conv_wear
+    # #run_details['last_fail'] = last_fail
+    # run_details['reward'] = rewards
         
     # Target reached. Plot results
-    cm.plot_results(results_run, results_exploration, results_score, run_details)
+    cm.plot_results(results_run, results_exploration, results_score, next_maint_t, wear_accum_t)
     
-    return run_details
+    #return run_details

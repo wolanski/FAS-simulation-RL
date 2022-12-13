@@ -15,10 +15,12 @@ class Conveyor(simpy.Resource):
         #self.logger = logger
         self.env = env
         self.name = name
-        #   Machine State ('state': 0.waiting, 1.running, 2.faulted)
-        self.states = {'state': 0, 'run_acc': 0, 'last_repair': 0, 'anomaly': 0}
-        self.hidden_states = {'accumulated_wear': 0}
-        self.faults = []
+        #Machine State ('state': 0.waiting, 1.running, 2.faulted)
+        #self.states = {'state': 0, 'run_acc': 0, 'last_repair': 0, 'anomaly': 0}
+        #self.states = {'state': 0, 'last_repair': 0}
+        self.states = {'state': 0}
+        self.hidden_states = {'accumulated_wear': 0, 'last_repair': 0}
+        #self.faults = []
 
     def process(self):
         with self.request() as req:
@@ -38,13 +40,12 @@ class Conveyor(simpy.Resource):
 
                 if self.hidden_states['accumulated_wear'] > 100:
                     self.states['state'] = 2 #fault
-                    #return self.fault()
                     yield self.fault()
 
                 #self.states['state'] = 1 #running
                 if self.debug:
                     print(self.name + ": to_next_step")
-                self.states['run_acc'] += 1
+                #self.states['run_acc'] += 1
                 self.add_wear()
         return
 
@@ -54,10 +55,10 @@ class Conveyor(simpy.Resource):
         self.hidden_states['accumulated_wear'] += 1
 
     def fault(self):
-        delay_factor = 1200 #(exp(self.t/5.0) - 1 ) / 30
+        delay_factor = 2000 #(exp(self.t/5.0) - 1 ) / 30
         extra_delay = delay_factor #* self.duration
-        #if self.debug:
-        #print("FAULT: %s, extra delay: %s" % (self.name, extra_delay))
+        if self.debug:
+            print("FAULT: %s, extra delay: %s" % (self.name, extra_delay))
         return self.env.timeout(extra_delay)
 
     # def add_fault(self, fault):
@@ -66,7 +67,7 @@ class Conveyor(simpy.Resource):
     def repair(self):
         #self.states['run_acc'] = 0 #maybe do not reset?
         self.hidden_states['accumulated_wear'] = 0
-        self.states['last_repair'] = self.env.now//60
+        self.hidden_states['last_repair'] = self.env.now//60
         repair_delay = 3000
         self.states['state'] = 0 #waiting
         if self.debug:
@@ -76,7 +77,7 @@ class Conveyor(simpy.Resource):
     def do_maintenance(self):
         #self.states['run_acc'] = 0    #maybe do not reset?
         self.hidden_states['accumulated_wear'] = 0     #maybe do not reset completely?
-        self.states['last_repair'] = self.env.now//60     #maybe do not reset?
+        self.hidden_states['last_repair'] = self.env.now//60     #maybe do not reset?
         maintenance_delay = 2000
         #self.states['state'] = 1 #running
         return self.env.timeout(maintenance_delay)

@@ -44,10 +44,10 @@ EXPLORATION_DECAY = 0.999
 
 # Simulation duration
 #SIM_DURATION = 365
-SIM_DURATION = 14400
+SIM_DURATION = 20000
 
 # Training episodes
-TRAINING_EPISODES = 20
+TRAINING_EPISODES = 5
 
 
 ################################################################################
@@ -72,7 +72,6 @@ def optimize(policy_net, target_net, memory):
     # Sample a random batch from memory
     batch = random.sample(memory, BATCH_SIZE)
     for state, action, reward, state_next, terminal in batch:
-        
         state_action_values = policy_net(torch.FloatTensor(state))
         
         # Get target Q for policy net update
@@ -138,12 +137,12 @@ class Memory():
 #                       6  Define results plotting function                    #
 ################################################################################
 
-def plot_results(run, exploration, score, run_details):
+def plot_results(run, exploration, score, next_maint_t, wear_accum_t):
     """Plot and report results at end of run"""
     
     # Get beds and patirents from run_detals DataFrame
-    next_maint = run_details['next_maint']
-    conv_wear = run_details['conv_wear']
+    # next_maint = run_details['next_maint']
+    # conv_wear = run_details['conv_wear']
     #last_fail = run_details['last_fail']
     
     # Set up chart (ax1 and ax2 share x-axis to combine two plots on one graph)
@@ -164,13 +163,17 @@ def plot_results(run, exploration, score, run_details):
     # Show last run tracker of beds and patients
 
     ax3 = fig.add_subplot(122)
-    day = np.arange(len(next_maint))*TIME_STEP
-    ax3.plot(day, next_maint, label='next_maint', color='g')
-    ax3.plot(day, conv_wear, label='conv_wear', color='r')
+    step = np.arange(len(next_maint_t))
+    ax3.plot(step, next_maint_t, label='next_maint', color='g')
+    #ax3.plot(step, wear_accum_t, label='wear_accum', color='r')
+
+    # day = np.arange(len(next_maint))*TIME_STEP
+    # ax3.plot(day, next_maint, label='next_maint', color='g')
+    # ax3.plot(day, conv_wear, label='conv_wear', color='r')
     #ax3.plot(day, last_fail, label='last_fail', color='b')
     
     # Set axes
-    ax3.set_xlabel('day')
+    ax3.set_xlabel('run')
     ax3.set_ylabel('main/wear')
     ax3.set_ylim(0)
     ax3.legend()
